@@ -1,0 +1,59 @@
+#!/bin/sh
+#C--------------------------------------------------------------------
+#C- GSDJVU Driver Script
+#C- Copyright (c) 2002-2005  Leon Bottou
+#C-
+#C- This software may be distributed under
+#C- the terms of the GNU General Public License. The license should have
+#C- accompanied the software or you may obtain a copy of the license
+#C- from the Free Software Foundation at http://www.fsf.org .
+#C-
+#C- This software may also be distributed under
+#C- the terms of the Common Public License 1.0. The license should have
+#C- accompanied the software or you may obtain a copy of the license
+#C- from the Free Software Foundation at http://www.fsf.org .
+#C-
+#C- This program is distributed in the hope that it will be useful,
+#C- but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C- GNU General Public License for more details.
+#C--------------------------------------------------------------------
+
+
+# Step 1 -- locate the directory containing this script
+
+progname="`basename $0`"
+if [ "$progname" != "$0" ]
+then
+    # programname contains directory components
+    progdir="`dirname $0`"
+else
+    # must search along path
+    tmpvar="$PATH"
+    while [ -n "$tmpvar" ]
+    do
+      IFS=':' read progdir tmpvar <<EOF
+$tmpvar
+EOF
+      test -x "$progdir/$progname" && break
+    done
+fi
+progdir=`cd $progdir ; pwd`
+while [ -L "$progdir/$progname" ]
+do
+    tmpvar=`ls -ld $progdir/$progname`
+    tmpvar=`expr "$tmpvar" : '.*-> *\(.*\)'`
+    progname=`basename $tmpvar` 
+    tmpvar=`dirname $tmpvar` 
+    progdir=`cd $progdir ; cd $tmpvar ; pwd` 
+done
+if [ ! -x "$progdir/$progname" ]
+then
+   echo 1>&2 "$progname: command not found"
+   exit 10
+fi
+
+# Step 2 -- execute ghostscript
+
+gsdir="$progdir"
+GS_LIB="$gsdir/lib:$gsdir/fonts:$gsdir" exec "$gsdir/bin/gs" "$@"
